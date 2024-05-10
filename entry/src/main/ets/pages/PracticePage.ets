@@ -1,5 +1,6 @@
 import promptAction from '@ohos.promptAction'
 import { AnswerStatus } from '../enums/AnswerStatus'
+import { OptionStatus } from '../enums/OptionStatus'
 import { PracticeStatus } from '../enums/PracticeStatus'
 import { getRandomQuestion, Question } from '../modal/Question'
 
@@ -43,12 +44,8 @@ struct PracticePage {
 			}
 			// 选项
 			Column({ space: 10 }) {
-				ForEach(this.questions[this.currentIndex].options, option => {
-					Button(option)
-						.optionButtonStyle({
-							bg: Color.White,
-							font: Color.Black
-						})
+				ForEach(this.questions[this.currentIndex].options, (option) => {
+					OptionButton({ option })
 						.enabled(this.answerStatus === AnswerStatus.Answering)
 						.onClick(() => {
 							// 判断练习状态
@@ -67,7 +64,8 @@ struct PracticePage {
 								this.stopPractice()
 							}
 						})
-				})
+					// 设置ForEach的keyGenerator
+				}, (option) => this.questions[this.currentIndex].word + '-' + option)
 			}
 			// 控制面板
 			Row({ space: 50 }) {
@@ -154,4 +152,44 @@ struct PracticePage {
 	.borderWidth(1)
 	.borderColor(color.border)
 	.backgroundColor(color.bg)
+}
+
+// 自定义选项按钮组件
+@Component
+struct OptionButton {
+	option: string
+	@State optionStatus: OptionStatus = OptionStatus.Default
+
+	getBgColor() {
+		switch (this.optionStatus) {
+			case OptionStatus.Right:
+				return '#1DBF7B'
+			case OptionStatus.Wrong:
+				return '#FA635F'
+			default:
+				return Color.White
+		}
+	}
+
+	build() {
+		Stack() {
+			Button(this.option)
+				.optionButtonStyle({
+					bg: this.getBgColor(),
+					font: this.optionStatus === OptionStatus.Default ? Color.Black : Color.White
+				})
+			if (this.optionStatus === OptionStatus.Right) {
+				Image($r('app.media.ic_right'))
+					.width(22)
+					.height(22)
+					.offset({ x: 10 })
+			} else if (this.optionStatus === OptionStatus.Wrong) {
+				Image($r('app.media.ic_wrong'))
+					.width(22)
+					.height(22)
+					.offset({ x: 10 })
+			}
+		}
+		.alignContent(Alignment.Start)
+	}
 }
