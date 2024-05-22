@@ -7,10 +7,11 @@ import { getRandomQuestion, Question } from '../modal/Question'
 @Entry
 @Component
 struct PracticePage {
-	@State currentIndex: number = 0
-	@State questions: Question[] = getRandomQuestion(10)
-	@State answerStatus: AnswerStatus = AnswerStatus.Answering
-	@State practiceStatus: PracticeStatus = PracticeStatus.Stopped
+	@State currentIndex: number = 0;
+	@State questions: Question[] = getRandomQuestion(10);
+	@State answerStatus: AnswerStatus = AnswerStatus.Answering;
+	@State practiceStatus: PracticeStatus = PracticeStatus.Stopped;
+	@State selectedOption: string = '';
 
 	startPractice() {
 		this.practiceStatus = PracticeStatus.Running;
@@ -45,7 +46,12 @@ struct PracticePage {
 			// 选项
 			Column({ space: 10 }) {
 				ForEach(this.questions[this.currentIndex].options, (option) => {
-					OptionButton({ option })
+					OptionButton({
+						option,
+						answerStatus: this.answerStatus,
+						answer: this.questions[this.currentIndex].answer,
+						selectedOption: this.selectedOption,
+					})
 						.enabled(this.answerStatus === AnswerStatus.Answering)
 						.onClick(() => {
 							// 判断练习状态
@@ -54,14 +60,19 @@ struct PracticePage {
 									message: '请先点击开始测试'
 								})
 							}
+
+							// 判断正误
+							this.selectedOption = option;
+
+							// 切换题目
 							this.answerStatus = AnswerStatus.Answered
 							if (this.currentIndex < this.questions.length - 1) {
 								setTimeout(() => {
-									this.currentIndex += 1
-									this.answerStatus = AnswerStatus.Answering
+									this.currentIndex += 1;
+									this.answerStatus = AnswerStatus.Answering;
 								}, 500)
 							} else {
-								this.stopPractice()
+								this.stopPractice();
 							}
 						})
 					// 设置ForEach的keyGenerator
@@ -77,7 +88,7 @@ struct PracticePage {
 					})
 					.enabled(this.practiceStatus != PracticeStatus.Stopped)
 					.onClick(() => {
-						this.stopPractice()
+						this.stopPractice();
 					})
 				Button(this.practiceStatus === PracticeStatus.Running ? '暂停测试' : '开始测试')
 					.controlButtonStyle({
@@ -88,14 +99,14 @@ struct PracticePage {
 					.stateEffect(false) // stateEffect属性设置Button是否开启点击效果
 					.onClick(() => {
 						if (this.practiceStatus === PracticeStatus.Running) {
-							this.pausePractice()
+							this.pausePractice();
 						} else {
-							this.startPractice()
+							this.startPractice();
 						}
 					})
 			}
 		}
-		.practiceBgStyle()
+		.practiceBgStyle();
 	}
 }
 
@@ -157,8 +168,26 @@ struct PracticePage {
 // 自定义选项按钮组件
 @Component
 struct OptionButton {
-	option: string
-	@State optionStatus: OptionStatus = OptionStatus.Default
+	option: string;
+	answer: string;
+	@State optionStatus: OptionStatus = OptionStatus.Default;
+	// prop 先声明的先更新
+	@Prop selectedOption: string;
+	// 监听器
+	@Prop @Watch('onAnswerStatusChange') answerStatus: AnswerStatus;
+
+	onAnswerStatusChange() {
+		console.log('监听器', this.answer)
+		if (this.option === this.answer) {
+			this.optionStatus = OptionStatus.Right;
+		} else {
+			if (this.option === this.selectedOption) {
+				this.optionStatus = OptionStatus.Wrong;
+			} else {
+				this.optionStatus = OptionStatus.Default;
+			}
+		}
+	}
 
 	getBgColor() {
 		switch (this.optionStatus) {
