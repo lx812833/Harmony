@@ -8,10 +8,13 @@ import { getRandomQuestion, Question } from '../modal/Question'
 @Component
 struct PracticePage {
 	@State currentIndex: number = 0;
-	@State questions: Question[] = getRandomQuestion(10);
 	@State answerStatus: AnswerStatus = AnswerStatus.Answering;
 	@State practiceStatus: PracticeStatus = PracticeStatus.Stopped;
 	@State selectedOption: string = '';
+	@State answeredCount: number = 0;
+	@State rightCount: number = 0;
+	@State totalCount: number = 10;
+	@State questions: Question[] = getRandomQuestion(this.totalCount);
 
 	startPractice() {
 		this.practiceStatus = PracticeStatus.Running;
@@ -29,10 +32,40 @@ struct PracticePage {
 		Column() {
 			// 统计面板
 			Column() {
-				Text('test')
-				Text('test')
-				Text('test')
-				Text('test')
+				StateItem({
+					name: '准确率',
+					icon: $r('app.media.ic_accuracy'),
+					fontColor: Color.Black,
+				}) {
+					Text((this.answeredCount === 0 ? 0 : this.rightCount / this.answeredCount * 100).toFixed() + '%')
+						.width(100)
+						.textAlign(TextAlign.Center)
+				}
+
+				StateItem({
+					name: '进度',
+					icon: $r('app.media.ic_progress'),
+					fontColor: Color.Black,
+				}) {
+					Progress({ value: this.answeredCount, total: this.totalCount })
+						.width(100)
+				}
+
+				StateItem({
+					name: '个数',
+					icon: $r('app.media.ic_accuracy'),
+					fontColor: Color.Black,
+				}) {
+					Text('0%')
+				}
+
+				StateItem({
+					name: '个数',
+					icon: $r('app.media.ic_accuracy'),
+					fontColor: Color.Black,
+				}) {
+					Text('0%')
+				}
 			}
 			.stateBgStyle()
 
@@ -63,6 +96,12 @@ struct PracticePage {
 
 							// 判断正误
 							this.selectedOption = option;
+
+							// 统计信息
+							this.answeredCount++;
+							if (option === this.questions[this.currentIndex].answer) {
+								this.rightCount++;
+							}
 
 							// 切换题目
 							this.answerStatus = AnswerStatus.Answered
@@ -107,6 +146,38 @@ struct PracticePage {
 			}
 		}
 		.practiceBgStyle();
+	}
+}
+
+@Component
+struct StateItem {
+	name: string;
+	icon: Resource;
+	fontColor: Color;
+	@BuilderParam statComp: () => void;
+
+	onPageShow() {
+		console.log('页面show');
+	}
+
+	aboutToAppear() {
+		console.log('about');
+	}
+
+	build() {
+		Row({ space: 10 }) {
+			Image(this.icon)
+				.width(14)
+				.height(14)
+			Text(this.name)
+				.fontSize(14)
+				.fontWeight(FontWeight.Medium)
+				.fontColor(this.fontColor)
+			Blank()
+			this.statComp()
+		}
+		.width('100%')
+		.height(30)
 	}
 }
 
