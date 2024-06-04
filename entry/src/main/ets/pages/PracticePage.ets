@@ -15,17 +15,22 @@ struct PracticePage {
 	@State rightCount: number = 0;
 	@State totalCount: number = 10;
 	@State questions: Question[] = getRandomQuestion(this.totalCount);
+	timerController: TextTimerController = new TextTimerController();
+	timeUsed: number = 0;
 
 	startPractice() {
 		this.practiceStatus = PracticeStatus.Running;
+		this.timerController.start();
 	}
 
 	pausePractice() {
 		this.practiceStatus = PracticeStatus.Paused;
+		this.timerController.pause();
 	}
 
 	stopPractice() {
 		this.practiceStatus = PracticeStatus.Stopped;
+		this.timerController.pause();
 	}
 
 	build() {
@@ -53,18 +58,40 @@ struct PracticePage {
 
 				StateItem({
 					name: '个数',
-					icon: $r('app.media.ic_accuracy'),
+					icon: $r('app.media.ic_count'),
 					fontColor: Color.Black,
 				}) {
-					Text('0%')
+					Button(this.totalCount.toString())
+						.width(100)
+						.height(25)
+						.backgroundColor('#EBEBEB')
+						.fontColor(Color.Black)
+						.enabled(this.practiceStatus === PracticeStatus.Stopped)
+						.onClick(() => {
+							TextPickerDialog.show({
+								range: ['5', '10', '15', '20'],
+								value: this.totalCount.toString(),
+								onAccept: (result) => {
+									this.totalCount = parseInt(result.value)
+									this.questions = getRandomQuestion(this.totalCount)
+								}
+							})
+						})
 				}
 
 				StateItem({
-					name: '个数',
-					icon: $r('app.media.ic_accuracy'),
+					name: '用时',
+					icon: $r('app.media.ic_timer'),
 					fontColor: Color.Black,
 				}) {
-					Text('0%')
+					Row() {
+						TextTimer({ controller: this.timerController })
+							.onTimer((utc: number, elapsedTime: number) => {
+								this.timeUsed = elapsedTime
+							})
+					}
+					.width(100)
+					.justifyContent(FlexAlign.Center)
 				}
 			}
 			.stateBgStyle()
